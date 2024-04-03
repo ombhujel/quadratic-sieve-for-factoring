@@ -2,7 +2,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.io.*;
 
-public class qs_take2{
+public class project_rsa{
     public static BigInteger zero = new BigInteger("0");
 	public static BigInteger one = new BigInteger("1");
 	public static BigInteger two = new BigInteger("2");
@@ -114,10 +114,10 @@ public class qs_take2{
 		return retru;
 	}
 
-    public static void main(String[] args) throws IOException{
+    public static void main(String[] args) throws IOException {
 		BufferedWriter file = new BufferedWriter(new FileWriter(args[0]));
-        BigInteger n = new BigInteger("9209839122440374002906008377605580208264841025166426304451583112053");
-        //BigInteger n = new BigInteger("920983912245166426304451583112053");
+        //BigInteger n = new BigInteger("9209839122440374002906008377605580208264841025166426304451583112053");
+		BigInteger n = new BigInteger("9209839122440374002906008377605580208264841025166426304451583112053");
 		//BigInteger n = new BigInteger("227179");
         //BigInteger bound = new BigInteger("30");
         double bound = 300000;
@@ -139,7 +139,7 @@ public class qs_take2{
 
 
         ArrayList<Integer> factorBase = new ArrayList<Integer>();
-        factorBase.add(-1);
+		factorBase.add(-1);
 		
 		for(int i = 2; i < primes.length; i++) {
 			if(primes[i]) {
@@ -150,36 +150,41 @@ public class qs_take2{
 					factorBase.add(bigIntI.intValue());
                     //System.out.println(bigIntI);
                 }
+				
 					
 			}
 			
 		}
 		System.out.println("Factor base size: " + factorBase.size());
 
-        BigInteger x = n.sqrt();
-        //BigInteger x = n.sqrt();
-        //BigInteger[] relations = new BigInteger[factorBase.size()*20];
-		int[] relations = new int[100000000];
+        BigInteger x = n.sqrt().add(one);
+        //BigInteger[] relations = new BigInteger[factorBase.size()*200];
+		//int[] relations = new int[100000000];
 		int[] vectors = new int[100000000];
+		//int[] finale = new int[100000000];
+		int[] relations = new int[100];
 
         for(int i = 0; i < relations.length ; i++) {
 			// compute number to be factorized from sequence
 			BigInteger bigIntI = new BigInteger(Integer.toString(i));
 			// (x + i)^2 - i - N
 			// we can also do (x + i)^2 - N if the - i doesn't work efficiently
-			int V = ((bigIntI.subtract(x)).pow(2)).subtract(n).intValue();
+			int V = ((x.add(bigIntI)).pow(2)).subtract(n).intValue();
 
 			relations[i] = V;
 			vectors[i] = V;
+			//finale[i] = V;
 			//System.out.print(V+" ");
 			
 		}
         //System.out.println();
 		
 		for (int i=0; i<factorBase.size(); i++){
+			//BigInteger p = factorBase.get(i);
 			int p = factorBase.get(i);
 			System.out.println("BASE: "+ p);
-            if(p==-1){
+			BigInteger root = one;
+			if(p==-1){
                 for(int j=0; j<relations.length;j++){
                     if(relations[j]<0){
 						relations[j]/=p;
@@ -188,46 +193,69 @@ public class qs_take2{
                 continue;
                 
             }
-			BigInteger root = one;
 			if(p % 4 == 3){
 				root = n.modPow(BigInteger.valueOf(p).add(one).divide(new BigInteger("4")),BigInteger.valueOf(p));
 			}else{
 				root = shanksTonelli(n, BigInteger.valueOf(p));
 			}
+			
             //System.out.println(root);
             if(root.equals(zero)){
                 for(int j=0; j<relations.length;j++){
-                    if(relations[j]%p==0){
-                        relations[j] /=p;
+                    if(relations[j] % p == 0){
+                        relations[j] /= p;
                     }
                 }
                 continue;
             }
-			int First_root = root.add(x).mod(BigInteger.valueOf(p)).intValue();
+			int First_root = root.subtract(x).mod(BigInteger.valueOf(p)).intValue();
 			//System.out.println("First Root :" + First_root);
-            int second_root = BigInteger.valueOf(p).subtract(root).add(x).mod(BigInteger.valueOf(p)).intValue();
+            int second_root = BigInteger.valueOf(p).subtract(root).subtract(x).mod(BigInteger.valueOf(p)).intValue();
 			//System.out.println("Second Root: " + second_root);
 			while(First_root < relations.length || second_root < relations.length){
 				if(First_root < relations.length){
 					if(relations[First_root] % p == 0){
-						relations[First_root]/=p;
+						relations[First_root] = relations[First_root]/p;
 					}
 				}
 				if(second_root < relations.length){
 					if(relations[second_root] % p == 0){
-						relations[second_root]/=p;
+						relations[second_root] = relations[second_root]/p;
 					}
 				}
 				First_root += p;
 				second_root += p;
 			}
+			
 		}
-        
 		
 		int abcd = 0;
+		
 		for(int i = 0; i < relations.length ; i++) {
 			if(relations[i] == 1){
-				int a = vectors[i];
+				abcd++;
+				
+			}
+		}
+		
+		/* 
+		for(int i=0; i<relations.length; i++){
+			if(relations[i] == 1){
+				abcd++;
+				//file.write(vectors[i]+" ");
+				for(int j = 0; j< factorBase.size(); j++){
+					//System.out.println(factorBase.get(i));
+					if(vectors[i] < 0){
+						vectors[i] = vectors[i] / factorBase.get(j);
+						continue;
+					}
+					if(vectors[i] % factorBase.get(j) == 0){
+						vectors[i] = vectors[i] / factorBase.get(j);
+						
+					}
+				}
+
+int a = vectors[i];
 				for(int j = 0; j < factorBase.size(); j++){
 					if(a % factorBase.get(j) == 0){
 						file.write(1 + " ");
@@ -238,14 +266,49 @@ public class qs_take2{
 				}
 				file.write('\n');
 			}
-			
 		}
+		*/
 		file.close();
 		System.out.println("Smooth Relations: " + abcd);
 
+
         
         /* 
-        
+        for (int i=0; i<factorBase.size(); i++){
+			BigInteger p = factorBase.get(i);
+			//System.out.println("BASE: "+ p);
+            BigInteger root = shanksTonelli(n, p);
+            //System.out.println(root);
+            if(root.equals(zero)){
+                for(int j=0; j<relations.length;j++){
+                    if(relations[j].mod(p).equals(zero)){
+                        relations[j] = relations[j].divide(p);
+                    }
+                }
+                continue;
+            }
+
+			BigInteger First_root = root.subtract(x).mod(p);
+			//System.out.println("First Root :" + First_root);
+            BigInteger second_root = p.subtract(root).subtract(x).mod(p);
+            //System.out.println("Second Root: " + second_root);
+            if(First_root.intValue() < relations.length || second_root.intValue() >= relations.length ){
+                for(int k = 0; k<(((relations.length-1)-First_root.intValue())/p.intValue())+1; k++){
+                    //System.out.print(First_root.intValue() + (k * p.intValue()) + " ");
+                    if(relations[First_root.intValue() + (k * p.intValue())].mod(p).equals(zero)){
+                        relations[First_root.intValue() + (k * p.intValue())] = relations[First_root.intValue() + (k * p.intValue())].divide(p);
+                    }
+                }            
+            }
+
+            if(second_root.intValue() < relations.length ){
+                for(int k = 0; k<(((relations.length-1)-second_root.intValue())/p.intValue())+1; k++){
+                    //System.out.print(second_root.intValue() + (k * p.intValue()) + " ");
+                    if(relations[second_root.intValue() + (k * p.intValue())].mod(p).equals(zero)){
+                        relations[second_root.intValue() + (k * p.intValue())] = relations[second_root.intValue() + (k * p.intValue())].divide(p);
+                    }
+                }
+            }
             for(int k = 0; k < relations.length ; k++) {
                 System.out.print(relations[k]+" "); 
             }
